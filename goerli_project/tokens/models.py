@@ -4,7 +4,8 @@ from django.db import models
 class Token(models.Model):
     unique_hash = models.CharField(
         max_length=20,
-        unique=True)
+        unique=True
+    )
     tx_hash = models.CharField(
         max_length=255
     )

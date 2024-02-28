@@ -4,6 +4,7 @@ import logging
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from api.paginations import CustomPagination
 from api.connector import w3
 from api.serializers import TokenCreateSerializer, TokenSerializer
 from api.utils import generate_token_id
@@ -82,8 +83,10 @@ def get_token_list(request):
       * - tokens/list/
     """
     tokens = Token.objects.all()
-    serializer = TokenSerializer(tokens, many=True)
-    return Response(serializer.data)
+    paginator = CustomPagination()
+    paginated_tokens = paginator.paginate_queryset(tokens, request)
+    serializer = TokenSerializer(paginated_tokens, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(['GET'])
