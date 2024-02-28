@@ -1,4 +1,5 @@
 from http import HTTPStatus
+import logging
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,8 +10,13 @@ from api.utils import generate_token_id
 from goerli_project.settings import ABI, CONTRACT, PRIVAT_KEY
 from tokens.models import Token
 
+
 CHAIN_ID = 5
 GAS = 2_000_000
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 @api_view(['POST'])
@@ -49,9 +55,9 @@ def create_token(request):
             signed_txn.rawTransaction
         )
     except ValueError as e:
-        # TODO: логирование
+        logging.error(f'{e}')
         Response(
-            {'message': f'Возникли проблемы с отправкой транзакции {e}'},
+            {'message': f'Возникли проблемы с отправкой транзакции: {e}'},
             status=HTTPStatus.BAD_REQUEST
         )
     serializer = TokenCreateSerializer(
