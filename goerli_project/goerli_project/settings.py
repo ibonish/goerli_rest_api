@@ -10,8 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # web3
 PRIVAT_KEY = os.getenv('PRIVAT_KEY', default='')
-NODE_URL = os.getenv('NODE_URL', default='https://ethereum-goerli-rpc.publicnode.com')
-CONTRACT = os.getenv('CONTRACT', default='0xcFcB050e965115A8F7922D617A39Ea577bcaC2C1')
+NODE_URL = os.getenv(
+    'NODE_URL',
+    default='https://ethereum-goerli-rpc.publicnode.com'
+)
+CONTRACT = os.getenv(
+    'CONTRACT',
+    default='0xcFcB050e965115A8F7922D617A39Ea577bcaC2C1'
+)
 
 # DJANGO
 SECRET_KEY = os.getenv('SECRET_KEY', default='secret-key')

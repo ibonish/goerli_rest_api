@@ -7,7 +7,7 @@ class Token(models.Model):
         unique=True
     )
     tx_hash = models.CharField(
-        max_length=255
+        max_length=255,
     )
     media_url = models.URLField()
     owner = models.CharField(

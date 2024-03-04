@@ -1,23 +1,14 @@
-from http import HTTPStatus
 import logging
+from http import HTTPStatus
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api.paginations import CustomPagination
-from api.connector import w3
 from api.serializers import TokenCreateSerializer, TokenSerializer
-from api.utils import generate_token_id
-from goerli_project.settings import ABI, CONTRACT, PRIVAT_KEY
+from api.utils import create_txn, generate_token_id, get_supply, send_txn
+from api.validators import validate_data
 from tokens.models import Token
-
-
-CHAIN_ID = 5
-GAS = 2_000_000
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 @api_view(['POST'])
@@ -34,33 +25,29 @@ def create_token(request):
     """
     owner = request.data['owner']
     media_url = request.data['media_url']
-    token_id = generate_token_id()
-    unicorns = w3.eth.contract(address=CONTRACT, abi=ABI)
-    unicorn_txn = unicorns.functions.mint(
-        owner,
-        token_id,
-        media_url
-    ).build_transaction({
-        'chainId': CHAIN_ID,
-        'gas': GAS,
-        'maxFeePerGas': w3.to_wei('2', 'gwei'),
-        'maxPriorityFeePerGas': w3.to_wei('1', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(owner),
-    })
     try:
-        signed_txn = w3.eth.account.sign_transaction(
-            unicorn_txn,
-            private_key=PRIVAT_KEY
-        )
-        txn = w3.eth.send_raw_transaction(
-            signed_txn.rawTransaction
-        )
-    except ValueError as e:
-        logging.error(f'{e}')
-        Response(
-            {'message': f'Возникли проблемы с отправкой транзакции: {e}'},
+        validate_data(owner, media_url)
+    except ValueError as err:
+        logging.error(err)
+        return Response(
+            {'message': f'{err}'},
             status=HTTPStatus.BAD_REQUEST
         )
+    try:
+        token_id = generate_token_id()
+    except ValueError as err:
+        logging.error(err)
+        return Response(
+            {'message': f'{err}'},
+            status=HTTPStatus.BAD_REQUEST
+        )
+    txn = send_txn(
+        create_txn(
+            owner,
+            token_id,
+            media_url
+        )
+    )
     serializer = TokenCreateSerializer(
         data={
             'unique_hash': token_id,
@@ -96,6 +83,4 @@ def get_total_supply(request):
     Эндпоинт:
       * - tokens/total_supply/
     """
-    unicorns = w3.eth.contract(address=CONTRACT, abi=ABI)
-    total_supply = unicorns.functions.totalSupply().call()
-    return Response({'result': f'{total_supply}'})
+    return Response({'result': f'{get_supply()}'})
